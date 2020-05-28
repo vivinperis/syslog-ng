@@ -113,7 +113,7 @@ dest_afsql_option
         | KW_TABLE '(' string ')'		{ afsql_dd_set_table(last_driver, $3); free($3); }
         | KW_COLUMNS '(' string_list ')'	{ afsql_dd_set_columns(last_driver, $3); }
         | KW_INDEXES '(' string_list ')'        { afsql_dd_set_indexes(last_driver, $3); }
-        | KW_VALUES '(' dest_afsql_values ')'		{ afsql_dd_set_values(last_driver, $3); }
+        | KW_VALUES '(' dest_afsql_values ')'		{ afsql_dd_set_values(last_driver, $3);  }
         | KW_IGNORE_TNS_CONFIG '(' yesno ')'    { afsql_dd_set_ignore_tns_config(last_driver,$3); }
         | KW_NULL '(' string ')'                { afsql_dd_set_null_value(last_driver, $3); free($3); }
         | KW_SESSION_STATEMENTS '(' string_list ')' { afsql_dd_set_session_statements(last_driver, $3); }
@@ -129,8 +129,8 @@ dest_afsql_values
         ;
 
 dest_afsql_values_build
-        : string dest_afsql_values_build	{ $$ = g_list_append($2, g_strdup($1)); free($1); }
-        | KW_DEFAULT dest_afsql_values_build	{ $$ = g_list_append($2, GUINT_TO_POINTER(AFSQL_COLUMN_DEFAULT)); }
+        : template_content dest_afsql_values_build	{ $$ = g_list_append($2, log_template_ref($1)); log_template_unref($1); }
+        | KW_DEFAULT dest_afsql_values_build	{ $$ = g_list_append($2, GUINT_TO_POINTER(AFSQL_COLUMN_DEFAULT)); } 
         |					{ $$ = NULL; }
         ;
 
