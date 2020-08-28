@@ -333,6 +333,12 @@ _compile_pcre_regexp(LogMatcherPcreRe *self, const gchar *re, GError **error)
           return FALSE;
         }
     }
+  if (self->super.flags & LMF_DUPNAMES)
+    {
+      if (!PCRE_DUPNAMES)
+        msg_warning("syslog-ng was compiled against an old PCRE which doesn't support the 'dupnames' flag");
+      flags |= PCRE_DUPNAMES;
+    }
 
   /* complile the regexp */
   self->pattern = pcre_compile2(re, flags, &rc, &errptr, &erroffset, NULL);
@@ -430,7 +436,7 @@ log_matcher_pcre_re_feed_named_substrings(LogMatcher *s, LogMessage *msg, int *m
          and the substring itself.
        */
       tabptr = name_table;
-      for (i = 0; i < namecount; i++)
+      for (i = 0; i < namecount; i++, tabptr += name_entry_size)
         {
           int n = (tabptr[0] << 8) | tabptr[1];
           gint begin_index = matches[2 * n];
@@ -440,7 +446,6 @@ log_matcher_pcre_re_feed_named_substrings(LogMatcher *s, LogMessage *msg, int *m
             continue;
 
           log_msg_set_value_by_name(msg, tabptr + 2, value + begin_index, end_index - begin_index);
-          tabptr += name_entry_size;
         }
     }
 }
@@ -743,6 +748,7 @@ CfgFlagHandler log_matcher_flag_handlers[] =
   { "substring",       CFH_SET, offsetof(LogMatcherOptions, flags), LMF_SUBSTRING     },
   { "prefix",          CFH_SET, offsetof(LogMatcherOptions, flags), LMF_PREFIX        },
   { "disable-jit",     CFH_SET, offsetof(LogMatcherOptions, flags), LMF_DISABLE_JIT   },
+  { "dupnames",        CFH_SET, offsetof(LogMatcherOptions, flags), LMF_DUPNAMES      },
 
   { NULL },
 };
